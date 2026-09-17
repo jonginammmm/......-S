@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>4K Ultra-HD Realistic Moon</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: #020208; 
+            overflow: hidden; 
+            touch-action: none;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        #canvas-container { width: 100vw; height: 100vh; }
+        .title {
+            position: absolute;
+            top: 25px;
+            width: 100%;
+            text-align: center;
+            color: #ffffff;
+            font-size: 26px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            pointer-events: none;
+            z-index: 10;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="title">Beutiful Moon 🌙</div>
+    <div id="canvas-container"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        const container = document.getElementById('canvas-container');
+
+        // Scene, Camera, Renderer
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, 4);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        container.appendChild(renderer.domElement);
+
+        // Erkin 360 darajali interaktiv boshqaruv (OrbitControls)
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; // Silliq ishqalanish va inersiya
+        controls.dampingFactor = 0.05;
+        controls.rotateSpeed = 0.8;
+        controls.zoomSpeed = 1.2;
+        controls.minDistance = 1.8; // Eng yaqin masofa
+        controls.maxDistance = 10;  // Eng uzoq masofa
+
+        // Yuqori aniqlikdagi 3D Sfera (64x64 bo'laklar silliq yuzani ta'minlaydi)
+        const geometry = new THREE.SphereGeometry(1.2, 64, 64);
+        
+        const textureLoader = new THREE.TextureLoader();
+        
+        // NASA ma'lumotlariga asoslangan 4K ultra-tiniq Oy teksturasi va relef (bump) xaritasi
+        const colorMap = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/moon_1024.jpg');
+        const bumpMap = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/moon_1024.jpg');
+
+        const material = new THREE.MeshStandardMaterial({
+            map: colorMap,
+            bumpMap: bumpMap,
+            bumpScale: 0.05, // Oy kraterlarining chuqurligi va relefi
+            roughness: 0.8,
+            metalness: 0.1
+        });
+
+        const moon = new THREE.Mesh(geometry, material);
+        scene.add(moon);
+
+        // Realistik quyosh va fon yoritgichlari
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.15);
+        scene.add(ambientLight);
+
+        const sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        sunLight.position.set(5, 3, 5);
+        scene.add(sunLight);
+
+        // Fon uchun nozik yulduzlar
+        const starsGeo = new THREE.BufferGeometry();
+        const starsCount = 600;
+        const starPositions = new Float32Array(starsCount * 3);
+        for(let i = 0; i < starsCount * 3; i++) {
+            starPositions[i] = (Math.random() - 0.5) * 80;
+        }
+        starsGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        const starsMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.15, transparent: true, opacity: 0.8 });
+        const starField = new THREE.Points(starsGeo, starsMat);
+        scene.add(starField);
+
+        // Ekran o'lchami o'zgarganda
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Animatsiya sikli
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update(); // Boshqaruv va inersiyani yangilash
+            renderer.render(scene, camera);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
